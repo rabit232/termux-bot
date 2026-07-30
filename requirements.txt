@@ -1,0 +1,2 @@
+aiohttp
+matrix-nio
