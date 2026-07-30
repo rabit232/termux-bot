@@ -42,6 +42,7 @@ python ribit_termux.py
 - `?sys`: Get Termux system status (CPU/RAM).
 - `?open [app]`: Open an application on Termux.
 - `?help`: Show available commands.
+- `?play_youtube [url]`: Play a YouTube video.
 
 ## Authorized Users
 Only the following users are authorized for system commands:

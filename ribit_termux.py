@@ -98,13 +98,25 @@ class RibitTermuxBot:
             return
 
         if command.startswith("?help"):
-            await self.send_message(room.room_id, "🤖 **Ribit 2.0 Active**\nCommands: `?ask [question]`, `?status`, `?sys`, `?open [app]`")
+            await self.send_message(room.room_id, "🤖 **Ribit 2.0 Active**\nCommands: `?ask [question]`, `?status`, `?sys`, `?open [app]`, `?play_youtube [url]`")
         elif command.startswith("?sys"):
             await self.get_sys_status(room)
         elif command.startswith("?open "):
             app = command.split(" ", 1)[1]
-            await self.send_message(room.room_id, f"🚀 Opening {app} on Termux!")
-            subprocess.Popen(app, shell=True)
+            if app.lower() == "youtube":
+                await self.send_message(room.room_id, "🚀 Opening YouTube on Termux!")
+                subprocess.Popen(["termux-open", "--app", "com.google.android.youtube"], shell=False)
+            elif app.lower() == "notes":
+                await self.send_message(room.room_id, "🚀 Opening Notes on Termux!")
+                # This might vary by device, a generic text editor might be better
+                subprocess.Popen(["termux-open", "--app", "com.termux.app.TermuxActivity"], shell=False) # Example, might need adjustment
+            else:
+                await self.send_message(room.room_id, f"🚀 Attempting to open {app} on Termux!")
+                subprocess.Popen(["termux-open", "--app", app], shell=False)
+        elif command.startswith("?play_youtube "):
+            video_url = command[len("?play_youtube "):]
+            await self.send_message(room.room_id, f"▶️ Playing YouTube video: {video_url}")
+            subprocess.Popen(["termux-open", video_url], shell=False)
         elif command.startswith("?ask "):
             query = command[5:]
             await self.client.room_typing(room.room_id, typing_state=True)
