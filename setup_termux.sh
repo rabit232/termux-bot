@@ -10,7 +10,7 @@ pkg install -y python python-pip git openssl-tool libcrypt libffi clang rust
 
 echo "Installing Python dependencies..."
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r requirements.txt psutil
 
 echo "Setting up llama-server (assuming it's already built or will be built manually)..."
 echo "Please ensure your llama-server is running on http://127.0.0.1:8080 before starting the bot."
