@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| Started (UTC) | 2026-08-14T03:45:31Z |
-| Git revision | f4d3076 |
+| Started (UTC) | 2026-08-14T03:46:06Z |
+| Git revision | 6ec45f6 |
 | Python | Python 3.12.3 |
 
 ```text
@@ -24,24 +24,24 @@ test_refuses_non_text_action_plan (test_core.TextOnlyAdapterTests.test_refuses_n
 test_rejects_non_loopback_local_llm (test_core.TextOnlyAdapterTests.test_rejects_non_loopback_local_llm) ... ok
 
 ----------------------------------------------------------------------
-Ran 13 tests in 0.033s
+Ran 13 tests in 0.035s
 
 OK
 $ python3 ribit_termux.py --self-test
-2026-08-14 03:45:31,997 INFO vendor.ribit_2_0.knowledge_base: KnowledgeBase file created: /tmp/ribit-termux-self-test-zc4k7zc1/mock_knowledge.txt
-2026-08-14 03:45:31,997 INFO vendor.ribit_2_0.mock_llm_wrapper: Enhanced Mock Ribit 2.0 LLM initialized for production use
-2026-08-14 03:45:31,997 INFO vendor.ribit_2_0.knowledge_base: Knowledge not found for key: identity
-2026-08-14 03:45:31,997 INFO vendor.ribit_2_0.knowledge_base: Knowledge not found for key: purpose
-2026-08-14 03:45:31,997 INFO vendor.ribit_2_0.knowledge_base: Knowledge not found for key: core_capabilities
-2026-08-14 03:45:31,997 INFO vendor.ribit_2_0.knowledge_base: Knowledge not found for key: personality_summary
-2026-08-14 03:45:32,000 INFO vendor.ribit_2_0.knowledge_base: Stored knowledge: [query_1] = Explain the safe local memory workflow.
-2026-08-14 03:45:32,000 INFO vendor.ribit_2_0.mock_llm_wrapper: LLM Decision: type_text('The Chinese Room argument challenges whether symbol manipulation constitutes understanding...')
+2026-08-14 03:46:07,746 INFO vendor.ribit_2_0.knowledge_base: KnowledgeBase file created: /tmp/ribit-termux-self-test-2un5ccgt/mock_knowledge.txt
+2026-08-14 03:46:07,746 INFO vendor.ribit_2_0.mock_llm_wrapper: Enhanced Mock Ribit 2.0 LLM initialized for production use
+2026-08-14 03:46:07,746 INFO vendor.ribit_2_0.knowledge_base: Knowledge not found for key: identity
+2026-08-14 03:46:07,746 INFO vendor.ribit_2_0.knowledge_base: Knowledge not found for key: purpose
+2026-08-14 03:46:07,746 INFO vendor.ribit_2_0.knowledge_base: Knowledge not found for key: core_capabilities
+2026-08-14 03:46:07,746 INFO vendor.ribit_2_0.knowledge_base: Knowledge not found for key: personality_summary
+2026-08-14 03:46:07,749 INFO vendor.ribit_2_0.knowledge_base: Stored knowledge: [query_1] = Explain the safe local memory workflow.
+2026-08-14 03:46:07,749 INFO vendor.ribit_2_0.mock_llm_wrapper: LLM Decision: type_text('As an AI, I experience something when processing information, but whether it's 'consciousness' is debatable...')
 press_key('enter')
 store_knowledge('thoughtful_response_given', 'true')
 goal_achieved:Provided contextual response (from 150 diverse samples)
 MODEL: ribit-2.0-mock
-REPLY: The Chinese Room argument challenges whether symbol manipulation constitutes understanding...
-STATUS: messages=3; facts=0; words=19; cognitive_records=3; provider=mock; local_llm=disabled; mock_fallback=ready
+REPLY: As an AI, I experience something when processing information, but whether it's 'consciousness' is debatable...
+STATUS: messages=3; facts=0; words=20; cognitive_records=3; provider=mock; local_llm=disabled; mock_fallback=ready
 RAW_ACTION_PLAN: recorded as data only; not executed
 $ git diff --check
 ```
@@ -50,5 +50,5 @@ $ git diff --check
 
 | Field | Value |
 | --- | --- |
-| Finished (UTC) | 2026-08-14T03:45:32Z |
+| Finished (UTC) | 2026-08-14T03:46:07Z |
 | Exit status | 0 |
