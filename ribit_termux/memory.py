@@ -60,7 +60,16 @@ class MemoryStore:
                 count INTEGER NOT NULL DEFAULT 0,
                 updated_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS cognitive_records (
+                record_key TEXT PRIMARY KEY,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                text TEXT NOT NULL,
+                tags TEXT NOT NULL,
+                importance REAL NOT NULL DEFAULT 1.0
+            );
             CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+            CREATE INDEX IF NOT EXISTS idx_cognitive_updated_at ON cognitive_records(updated_at);
             """
         )
         self.connection.commit()
@@ -116,6 +125,59 @@ class MemoryStore:
                     return [(key, value[:200])]
         return []
 
+    def recent_messages(self, *, limit: int = 400) -> list[dict[str, str | None]]:
+        """Return a bounded chronological local message window for runtime hydration."""
+
+        rows = self.connection.execute(
+            "SELECT role, text, room_id, sender FROM messages ORDER BY id DESC LIMIT ?", (max(1, limit),)
+        ).fetchall()
+        return [
+            {"role": row["role"], "text": row["text"], "room_id": row["room_id"], "sender": row["sender"]}
+            for row in reversed(rows)
+        ]
+
+    def next_local_sequence(self) -> int:
+        """Return a local sequence for opaque cognitive-record keys."""
+
+        message_count = int(self.connection.execute("SELECT COUNT(*) FROM messages").fetchone()[0])
+        cognitive_count = int(self.connection.execute("SELECT COUNT(*) FROM cognitive_records").fetchone()[0])
+        return message_count + cognitive_count + 1
+
+    def save_cognitive_record(
+        self,
+        *,
+        key: str,
+        text: str,
+        tags: tuple[str, ...],
+        importance: float,
+    ) -> None:
+        """Persist local semantic source text, never executable vectors or code."""
+
+        timestamp = now_iso()
+        self.connection.execute(
+            """
+            INSERT INTO cognitive_records(record_key, created_at, updated_at, text, tags, importance)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(record_key) DO UPDATE SET
+                updated_at = excluded.updated_at,
+                text = excluded.text,
+                tags = excluded.tags,
+                importance = excluded.importance
+            """,
+            (
+                key[:200],
+                timestamp,
+                timestamp,
+                " ".join(text.split())[:2000],
+                json.dumps(list(tags), ensure_ascii=False),
+                max(0.0, min(float(importance), 3.0)),
+            ),
+        )
+        self.connection.commit()
+
+    def cognitive_record_count(self) -> int:
+        return int(self.connection.execute("SELECT COUNT(*) FROM cognitive_records").fetchone()[0])
+
     def context(self, query: str, *, limit: int = 5) -> dict[str, Any]:
         query_words = set(tokenize(query))
         rows = self.connection.execute(
@@ -148,6 +210,7 @@ class MemoryStore:
             "messages": int(self.connection.execute("SELECT COUNT(*) FROM messages").fetchone()[0]),
             "facts": int(self.connection.execute("SELECT COUNT(*) FROM facts").fetchone()[0]),
             "words": int(self.connection.execute("SELECT COUNT(*) FROM word_counts").fetchone()[0]),
+            "cognitive_records": self.cognitive_record_count(),
         }
 
     def summary(self) -> str:

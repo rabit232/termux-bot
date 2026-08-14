@@ -76,8 +76,8 @@ class MatrixBot:
         if command == "?help":
             await self.send_message(
                 room_id,
-                "Commands: ?ask <question>, ?teach <text>, ?memory, ?status, ?sys, ?help. "
-                "All replies are text-only; model action plans are never executed.",
+                "Commands: ?ask <question>, ?teach <text>, ?memory, ?mind, ?plan <goal>, ?status, ?sys, ?help. "
+                "All replies and plans are text-only; model action plans are never executed.",
             )
         elif command == "?ask":
             if not arguments:
@@ -92,6 +92,28 @@ class MatrixBot:
                 await self.send_message(room_id, "Saved the text to local memory.")
         elif command == "?memory":
             await self.send_message(room_id, self.engine.memory.summary())
+        elif command == "?mind":
+            mind = self.engine.mind_status()
+            runtime = mind["runtime"]
+            semantic = runtime["semantic"]
+            graph = runtime["knowledge_graph"]
+            style = runtime["persona"]
+            policy = runtime["policy"]
+            await self.send_message(
+                room_id,
+                "Mind status: "
+                f"semantic_records={semantic['records']}; graph_nodes={graph['nodes']}; graph_edges={graph['edges']}; "
+                f"tone={style['emotion']}; cognition_records={runtime['persistent_cognitive_records']}; "
+                f"process_execution={policy['process_execution']}; web_access={policy['web_access']}; "
+                f"gui_control={policy['gui_control']}; robot_actuation={policy['robot_actuation']}.",
+            )
+        elif command == "?plan":
+            if not arguments:
+                await self.send_message(room_id, "Usage: ?plan <goal>")
+            else:
+                plan = self.engine.plan(arguments)
+                text = "\n".join(f"{item['order']}. {item['title']}: {item['purpose']}" for item in plan)
+                await self.send_message(room_id, "Text-only plan; no steps are executed:\n" + text)
         elif command in {"?status", "?sys"}:
             await self.send_message(room_id, self.engine.status())
         else:

@@ -107,7 +107,7 @@ tests/test_core.py              Text-only and local-first tests
 
 ## Supplied project compatibility
 
-See [COMPATIBILITY.md](COMPATIBILITY.md) for a project-by-project record of what was integrated, what was kept separate, and why the supplied private memory database is not committed.
+See [COMPATIBILITY.md](COMPATIBILITY.md) for a project-by-project record of what was integrated, what was kept separate, and why the supplied private memory database is not committed. The complete non-executing audit of all 629 analyzed Python files is in [docs/MODULE_INVENTORY.md](docs/MODULE_INVENTORY.md), the integration decision for each major module group is in [docs/MODULE_HARMONY.md](docs/MODULE_HARMONY.md), and the active Termux runtime design is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Provenance
 
