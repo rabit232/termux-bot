@@ -125,6 +125,25 @@ class MemoryStore:
                     return [(key, value[:200])]
         return []
 
+    def room_history(self, *, room_id: str | None, limit: int = 20) -> list[dict[str, str | None]]:
+        """Return a bounded chronological transcript for exactly one local room."""
+
+        bounded_limit = max(1, min(int(limit), 200))
+        if room_id is None:
+            rows = self.connection.execute(
+                "SELECT role, text, room_id, sender FROM messages WHERE room_id IS NULL ORDER BY id DESC LIMIT ?",
+                (bounded_limit,),
+            ).fetchall()
+        else:
+            rows = self.connection.execute(
+                "SELECT role, text, room_id, sender FROM messages WHERE room_id = ? ORDER BY id DESC LIMIT ?",
+                (room_id, bounded_limit),
+            ).fetchall()
+        return [
+            {"role": row["role"], "text": row["text"], "room_id": row["room_id"], "sender": row["sender"]}
+            for row in reversed(rows)
+        ]
+
     def recent_messages(self, *, limit: int = 400) -> list[dict[str, str | None]]:
         """Return a bounded chronological local message window for runtime hydration."""
 

@@ -8,7 +8,8 @@
 | --- | --- | --- | --- |
 | Matrix transport | `ribit_termux.matrix_bot` | Authorized text commands and replies | Sends/receives Matrix text only when configured |
 | Conversation engine | `ribit_termux.engine` | Connects local memory to providers | No process, web, GUI, or device controls |
-| Local memory | `ribit_termux.memory` | SQLite messages, small facts, and word counts | Device-local runtime data only |
+| Local memory | `ribit_termux.memory` | SQLite messages, small facts, word counts, cognitive records, and room-scoped history | Device-local runtime data only |
+| Cognitive additions | `ribit_termux.cognition` | Ribit linguistic analysis, text-only conversation guard, Termux working memory, semantic and graph context | Diagnostic/context metadata only; no actions |
 | GhostOS-style LLM client | `ribit_termux.providers.LocalOpenAICompatibleClient` | OpenAI-compatible `llama-server` loopback endpoint | `localhost` / loopback only |
 | Ribit fallback | Vendored `MockRibit20LLM` | Offline text-generation fallback | Returned actions are filtered and never executed |
 
@@ -23,6 +24,10 @@ The bot deliberately removes the earlier application-opening and YouTube-opening
 | `?ask <question>` | Stores the question locally and returns a text-only answer |
 | `?teach <text>` | Stores the supplied text in local SQLite memory |
 | `?memory` | Shows a compact local memory summary |
+| `?mind` | Shows bounded semantic, graph, linguistic, working-memory, and policy status |
+| `?plan <goal>` | Returns a text-only plan and never creates or executes tasks |
+| `?history [1-200]` | Displays a capped local transcript from the current room only |
+| `?profile` | Shows a bounded in-memory communication-style summary for the requesting user |
 | `?status` / `?sys` | Shows memory and provider status; does not run shell commands |
 | `?help` | Shows the command list |
 
@@ -99,10 +104,13 @@ ribit_termux/
   matrix_bot.py                 Authorized text-only Matrix transport
   memory.py                     Local SQLite memory
   providers.py                  GhostOS local LLM + safe MockLLM adapter
+  cognition/                    Semantic, graph, linguistic, conversation, and working-memory modules
 vendor/ribit_2_0/               Minimal canonical MockRibit20LLM sources
 scripts/setup_termux.sh         Termux installation and compilation
-example.env                     Safe configuration template
+scripts/run_tests.sh            Reproducible validation and report writer
+test_runs/                      Timestamped Markdown test reports
 tests/test_core.py              Text-only and local-first tests
+example.env                     Safe configuration template
 ```
 
 ## Supplied project compatibility
@@ -120,9 +128,8 @@ The vendored subset is intentionally incomplete: optional web-search, Matrix enh
 Run the repository checks from the project root:
 
 ```bash
-python -m compileall -q ribit_termux vendor ribit_termux.py
-python -m unittest discover -s tests -v
-python ribit_termux.py --self-test
+chmod +x scripts/run_tests.sh
+./scripts/run_tests.sh
 ```
 
-The test suite verifies that non-text action plans are not executed, non-loopback LLM URLs are rejected, mock fallback works, and local memory is persisted only in the runtime location.
+The runner performs compilation, unit tests, the offline self-test, and a whitespace check. It writes a timestamped Markdown result and refreshes `test_runs/latest.md`; verbose machine-local `.log` output remains untracked. The suite verifies that non-text action plans are not executed, automation-style prompts are refused before provider use, non-loopback LLM URLs are rejected, mock fallback works, bounded linguistic/working memory behaves correctly, room history is scoped locally, and persistent memory stays in the runtime location.

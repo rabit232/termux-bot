@@ -25,3 +25,6 @@ dist/
 # Termux / editor files
 .termux/
 .vscode/
+
+# Local verbose test logs; Markdown test reports in test_runs/ are retained.
+test_runs/*.log

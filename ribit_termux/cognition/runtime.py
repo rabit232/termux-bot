@@ -7,10 +7,13 @@ from typing import Any
 from ..memory import MemoryStore
 from ..policy import CapabilityPolicy
 from .context import ContextBuilder, ContextPackage
+from .conversation import ConversationDecision, TextOnlyConversationGuard
 from .knowledge import KnowledgeGraph
+from .linguistics import LinguisticAnalyzer
 from .persona import PersonaEngine
 from .reasoning import AttentionEngine, PlanningEngine, ReasoningEngine, ReflectionEngine
 from .semantic import SemanticMemory
+from .working import ThoughtTrace, WorkingMemory
 
 
 class CognitiveRuntime:
@@ -26,11 +29,15 @@ class CognitiveRuntime:
         self.semantic = SemanticMemory()
         self.graph = KnowledgeGraph()
         self.persona = PersonaEngine()
+        self.linguistics = LinguisticAnalyzer()
+        self.conversation_guard = TextOnlyConversationGuard()
         self.attention = AttentionEngine()
         self.reasoning = ReasoningEngine(self.semantic, self.graph, self.attention)
         self.reflection = ReflectionEngine()
         self.planning = PlanningEngine()
         self.context_builder = ContextBuilder(self.persona, policy)
+        self.working_memory = WorkingMemory()
+        self.thought_trace = ThoughtTrace()
         self._sequence = 0
         self._hydrate_from_persistent_memory()
 
@@ -49,12 +56,26 @@ class CognitiveRuntime:
         key = f"{source}:{self._sequence}"
         self.semantic.add(key, clean, tags=tags, importance=1.2 if source.startswith("manual") else 1.0)
         self.graph.learn_text(clean, tags=tags)
+        self.working_memory.put(key, clean, category=source, importance=0.9 if source.startswith("manual") else 0.6)
+        self.thought_trace.add("learn", f"Indexed local {source} text in semantic and graph memory.")
         if persist:
             self.memory.save_cognitive_record(key=key, text=clean, tags=tags, importance=1.0)
 
-    def prepare(self, query: str) -> ContextPackage:
+    def conversation_decision(self, prompt: str) -> ConversationDecision:
+        return self.conversation_guard.classify(prompt)
+
+    def prepare(self, query: str, *, sender: str | None = None) -> ContextPackage:
         reasoning = self.reasoning.analyze(query)
-        return self.context_builder.build(query=query, memory=self.memory.context(query), reasoning=reasoning)
+        linguistics = self.linguistics.analyze(query, user_id=sender)
+        self.working_memory.put("active_query", query[:1000], category="query", importance=1.0)
+        self.working_memory.put("active_linguistics", linguistics, category="analysis", importance=0.8)
+        self.thought_trace.add("analyze", "Prepared bounded local linguistic, semantic, and graph context.")
+        return self.context_builder.build(
+            query=query,
+            memory=self.memory.context(query),
+            reasoning=reasoning,
+            linguistics=linguistics,
+        )
 
     def review(self, *, query: str, response: str, context: ContextPackage) -> dict[str, Any]:
         return self.reflection.review(query=query, response=response, reasoning=context.reasoning)
@@ -70,6 +91,9 @@ class CognitiveRuntime:
             "semantic": self.semantic.stats(),
             "knowledge_graph": self.graph.stats(),
             "persona": self.persona.style(),
+            "linguistics_profiles": len(self.linguistics.user_patterns),
+            "working_memory": self.working_memory.stats(),
+            "thought_trace": self.thought_trace.latest(limit=5),
             "policy": self.policy.summary(),
             "persistent_cognitive_records": self.memory.cognitive_record_count(),
         }

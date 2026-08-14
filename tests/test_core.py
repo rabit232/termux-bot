@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from ribit_termux.cognition.linguistics import LinguisticAnalyzer
+from ribit_termux.cognition.working import WorkingMemory
 from ribit_termux.config import Settings
 from ribit_termux.engine import RibitEngine
 from ribit_termux.matrix_bot import MatrixBot, NIO_AVAILABLE
@@ -17,6 +19,30 @@ from ribit_termux.providers import (
     RibitMockProvider,
     RibitTextOnlyAdapter,
 )
+
+
+class LinguisticAndWorkingMemoryTests(unittest.TestCase):
+    def test_linguistic_analysis_tracks_bounded_sender_style(self) -> None:
+        analyzer = LinguisticAnalyzer(max_patterns_per_user=3)
+        first = analyzer.analyze("Could you explain the Termux Matrix API, please?", user_id="@ada:local")
+        self.assertEqual(first["intent"], "information_seeking")
+        self.assertEqual(first["formality"], "formal")
+        self.assertEqual(first["question_depth"], "general")
+        analyzer.analyze("How can I test it?", user_id="@ada:local")
+        analyzer.analyze("Thanks, that helps.", user_id="@ada:local")
+        analyzer.analyze("One more question?", user_id="@ada:local")
+        profile = analyzer.profile("@ada:local")
+        self.assertTrue(profile["available"])
+        self.assertEqual(profile["messages_analyzed"], 3)
+
+    def test_working_memory_evicts_low_importance_entries(self) -> None:
+        memory = WorkingMemory(capacity=2)
+        memory.put("low", "discarded", category="test", importance=0.1)
+        memory.put("high", "retained", category="test", importance=1.0)
+        memory.put("middle", "retained", category="test", importance=0.5)
+        self.assertEqual(memory.stats()["items"], 2)
+        self.assertEqual(memory.find("test")[0]["key"], "high")
+        self.assertNotIn("low", memory.items)
 
 
 class CapabilityPolicyTests(unittest.TestCase):
@@ -115,9 +141,47 @@ class EngineTests(unittest.IsolatedAsyncioTestCase):
                 self.assertGreaterEqual(mind["persistent_cognitive_records"], 3)
                 self.assertFalse(mind["policy"]["process_execution"])
                 self.assertFalse(mind["policy"]["web_access"])
+                self.assertEqual(mind["linguistics_profiles"], 1)
+                self.assertGreater(mind["working_memory"]["items"], 0)
+                self.assertGreaterEqual(len(mind["thought_trace"]), 2)
+                profile = engine.communication_profile("@tester:local")
+                self.assertTrue(profile["available"])
+                engine.teach(room_id="other-room", sender="@other:local", text="This message belongs elsewhere.")
+                history = engine.history(room_id="local", limit=200)
+                self.assertGreaterEqual(len(history), 3)
+                self.assertTrue(all(entry["room_id"] == "local" for entry in history))
                 plan = engine.plan("Document the local knowledge architecture")
                 self.assertEqual([item["order"] for item in plan], [1, 2, 3, 4])
                 self.assertIn("not execute", engine.last_review["note"])
+            finally:
+                engine.close()
+
+    async def test_automation_style_prompt_is_refused_before_provider_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            settings = Settings(
+                runtime_dir=root,
+                db_path=root / "memory.db",
+                knowledge_file=root / "knowledge.txt",
+                provider="mock",
+                local_llm_url="http://127.0.0.1:8080/v1",
+                local_llm_model="test-model",
+                local_llm_timeout_seconds=1.0,
+                matrix_homeserver="",
+                matrix_user_id="",
+                matrix_password="",
+                matrix_device_id="test",
+                authorized_users=(),
+                auto_join_invites=False,
+            )
+            engine = RibitEngine(MemoryStore(settings.db_path), ProviderRouter(settings))
+            try:
+                result = await engine.answer(
+                    room_id="local", sender="@tester:local", prompt="Please run command ls and open terminal"
+                )
+                self.assertEqual(result.used_model, "text-only-capability-guard")
+                self.assertIn("does not execute", result.text)
+                self.assertIsNone(result.raw_decision)
             finally:
                 engine.close()
 

@@ -76,7 +76,7 @@ class MatrixBot:
         if command == "?help":
             await self.send_message(
                 room_id,
-                "Commands: ?ask <question>, ?teach <text>, ?memory, ?mind, ?plan <goal>, ?status, ?sys, ?help. "
+                "Commands: ?ask <question>, ?teach <text>, ?memory, ?mind, ?plan <goal>, ?history [1-200], ?profile, ?status, ?sys, ?help. "
                 "All replies and plans are text-only; model action plans are never executed.",
             )
         elif command == "?ask":
@@ -98,12 +98,14 @@ class MatrixBot:
             semantic = runtime["semantic"]
             graph = runtime["knowledge_graph"]
             style = runtime["persona"]
+            working = runtime["working_memory"]
             policy = runtime["policy"]
             await self.send_message(
                 room_id,
                 "Mind status: "
                 f"semantic_records={semantic['records']}; graph_nodes={graph['nodes']}; graph_edges={graph['edges']}; "
-                f"tone={style['emotion']}; cognition_records={runtime['persistent_cognitive_records']}; "
+                f"tone={style['emotion']}; working_items={working['items']}; linguistic_profiles={runtime['linguistics_profiles']}; "
+                f"cognition_records={runtime['persistent_cognitive_records']}; "
                 f"process_execution={policy['process_execution']}; web_access={policy['web_access']}; "
                 f"gui_control={policy['gui_control']}; robot_actuation={policy['robot_actuation']}.",
             )
@@ -114,6 +116,32 @@ class MatrixBot:
                 plan = self.engine.plan(arguments)
                 text = "\n".join(f"{item['order']}. {item['title']}: {item['purpose']}" for item in plan)
                 await self.send_message(room_id, "Text-only plan; no steps are executed:\n" + text)
+        elif command == "?history":
+            try:
+                limit = int(arguments) if arguments else 20
+            except ValueError:
+                await self.send_message(room_id, "Usage: ?history [1-200]")
+                return
+            entries = self.engine.history(room_id=room_id, limit=limit)
+            if not entries:
+                await self.send_message(room_id, "No local history is available for this room.")
+            else:
+                transcript = "\n".join(
+                    f"{entry['role']}: {str(entry['text'])[:300]}" for entry in entries
+                )
+                await self.send_message(room_id, ("Local room history:\n" + transcript)[:6000])
+        elif command == "?profile":
+            profile = self.engine.communication_profile(sender)
+            if not profile.get("available"):
+                await self.send_message(room_id, "No in-memory communication profile is available yet.")
+            else:
+                await self.send_message(
+                    room_id,
+                    "Local profile: "
+                    f"messages={profile['messages_analyzed']}; tone={profile['preferred_tone']}; "
+                    f"formality={profile['preferred_formality']}; intent={profile['common_intent']}; "
+                    f"question_frequency={profile['question_frequency']}.",
+                )
         elif command in {"?status", "?sys"}:
             await self.send_message(room_id, self.engine.status())
         else:

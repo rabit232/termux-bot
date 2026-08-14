@@ -61,3 +61,15 @@ The five supplied Python modules remain a **separate research runtime**. The sta
 | `ribit_termux_enhanced.py` and `ribit_termux_enhanced (1).py` | Replaced by the package-based `ribit_termux` implementation. |
 | `robotics_interface.py` and `robotics_interface (1).py` | Not activated; robot actuation is denied by policy. |
 | Empty and repeated GhostOS package/test files | Recorded in the inventory; no copy is needed in the Termux package. |
+
+## Subsequent 0.2 extensions
+
+| Supplied source module | 0.2 implementation | Runtime behavior |
+| --- | --- | --- |
+| Ribit 2.0 `linguistics_engine.py` | `ribit_termux.cognition.linguistics.LinguisticAnalyzer` | Adds bounded intent, tone, formality, question-depth, key-phrase, and local sender-style metadata. It keeps at most the configured number of in-memory records per sender. |
+| Ribit 2.0 `conversational_mode.py` | `ribit_termux.cognition.conversation.TextOnlyConversationGuard` | Classifies automation-style prompts and returns a text-only capability refusal before a provider is called. It never switches to automation mode. |
+| NewTermux `working_memory.py` | `ribit_termux.cognition.working.WorkingMemory` | Provides a capacity-bounded, importance-aware local cache for active message context. |
+| NewTermux `thought_stream.py` | `ribit_termux.cognition.working.ThoughtTrace` | Keeps short user-safe diagnostic event summaries, not hidden reasoning or executable task state. |
+| NewTermux `conversation_memory.py`, Ribit history-learning patterns | `MemoryStore.room_history()` and `?history [1-200]` | Reads only the current room’s locally stored transcript, with hard message and output-size caps. |
+
+The vendored `MockRibit20LLM` subset was also tightened: optional web, Matrix-enhancement, self-testing execution, multi-language execution, GUI, and robot integrations are not imported. Its text-only capability metadata now reflects the Termux runtime boundary.

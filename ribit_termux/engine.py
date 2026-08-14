@@ -23,8 +23,12 @@ class RibitEngine:
     async def answer(self, *, room_id: str | None, sender: str | None, prompt: str) -> GenerationResult:
         self.memory.learn(room_id=room_id, sender=sender, role="user", text=prompt)
         self.cognition.observe(prompt, source="user")
-        context = self.cognition.prepare(prompt)
-        result = await self.providers.generate(prompt, context.as_provider_context())
+        decision = self.cognition.conversation_decision(prompt)
+        context = self.cognition.prepare(prompt, sender=sender)
+        if decision.allow_provider:
+            result = await self.providers.generate(prompt, context.as_provider_context())
+        else:
+            result = GenerationResult(text=decision.reason, used_model="text-only-capability-guard")
         self.memory.learn(room_id=room_id, sender="ribit", role=f"assistant:{result.used_model}", text=result.text)
         self.cognition.observe(result.text, source=f"assistant:{result.used_model}")
         self.last_review = self.cognition.review(query=prompt, response=result.text, context=context)
@@ -36,6 +40,14 @@ class RibitEngine:
 
     def plan(self, goal: str) -> list[dict[str, Any]]:
         return self.cognition.plan_for(goal)
+
+    def history(self, *, room_id: str | None, limit: int = 20) -> list[dict[str, str | None]]:
+        return self.memory.room_history(room_id=room_id, limit=limit)
+
+    def communication_profile(self, sender: str | None) -> dict[str, Any]:
+        if not sender:
+            return {"available": False}
+        return self.cognition.linguistics.profile(sender)
 
     def mind_status(self) -> dict[str, Any]:
         return {"runtime": self.cognition.mind_status(), "last_review": self.last_review}
