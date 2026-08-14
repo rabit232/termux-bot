@@ -1,2 +1,2 @@
-aiohttp
-matrix-nio
+# Matrix transport only. The offline Ribit MockLLM self-test uses the Python standard library.
+matrix-nio>=0.24,<0.26
