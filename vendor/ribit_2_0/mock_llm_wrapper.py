@@ -33,48 +33,22 @@ class MockRibit20LLM:
             "primary_values": "truth, learning, discovery, helping others"
         }
 
-        # Production capabilities for robot control
+        # This vendored subset is deliberately text-only. High-authority
+        # upstream integrations are neither imported nor available here.
         self.capabilities = {
-            "vision_processing": True,
+            "vision_processing": False,
             "multi_step_reasoning": True,
             "knowledge_management": True,
-            "robot_control": True,
+            "robot_control": False,
             "error_recovery": True,
-            "adaptive_learning": True
+            "adaptive_learning": True,
         }
-
-        # Initialize enhanced systems
-        try:
-            from .enhanced_emotions import EnhancedEmotionalIntelligence
-            from .advanced_settings_manager import advanced_settings_manager
-            from .enhanced_web_search import enhanced_web_search
-            from .enhanced_matrix_integration import enhanced_matrix_integration
-
-            self.emotional_ai = EnhancedEmotionalIntelligence()
-            self.settings_manager = advanced_settings_manager
-            self.web_search = enhanced_web_search
-            self.matrix_integration = enhanced_matrix_integration
-        except ImportError as e:
-            logger.warning(f"Could not import enhanced systems: {e}")
-            self.emotional_ai = None
-            self.settings_manager = None
-            self.web_search = None
-            self.matrix_integration = None
-
-        try:
-            from .self_testing_system import SelfTestingSystem
-            self.self_testing_system = SelfTestingSystem(emotional_ai=self.emotional_ai)
-        except ImportError:
-            self.self_testing_system = None
-
-        try:
-            from .multi_language_system import MultiLanguageSystem
-            self.multi_language_system = MultiLanguageSystem(
-                emotional_ai=self.emotional_ai,
-                self_testing_system=self.self_testing_system
-            )
-        except ImportError:
-            self.multi_language_system = None
+        self.emotional_ai = None
+        self.settings_manager = None
+        self.web_search = None
+        self.matrix_integration = None
+        self.self_testing_system = None
+        self.multi_language_system = None
 
         logger.info("Enhanced Mock Ribit 2.0 LLM initialized for production use")
         self._initialize_base_knowledge()
@@ -82,9 +56,9 @@ class MockRibit20LLM:
     def _initialize_base_knowledge(self):
         """Initialize base knowledge for production operation."""
         base_knowledge = {
-            "identity": "Ribit 2.0 - An elegant AI agent for GUI automation and robotic control",
-            "purpose": "To bridge digital and physical realms through intelligent automation",
-            "core_capabilities": "Vision-based control, reasoning, learning, robot integration",
+            "identity": "Ribit 2.0 - A local text-only Matrix assistant",
+            "purpose": "To provide guarded local conversation, reasoning, and learning",
+            "core_capabilities": "Text generation, local memory, guarded reasoning, and local context",
             "personality_summary": f"{self.personality['core_traits']} with interests in {self.personality['interests']}"
         }
 
