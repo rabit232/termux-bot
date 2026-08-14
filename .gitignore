@@ -1,0 +1,27 @@
+# Secrets and Matrix session state
+.env
+*.env
+!example.env
+runtime/
+ribit_store/
+*.store
+
+# Local user memory and generated model knowledge
+*.db
+*.db-shm
+*.db-wal
+knowledge.txt
+ribit_mock_knowledge.txt
+
+# Python build and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+build/
+dist/
+*.egg-info/
+
+# Termux / editor files
+.termux/
+.vscode/
